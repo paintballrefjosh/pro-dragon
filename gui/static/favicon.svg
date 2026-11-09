@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0b0f14"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#243040" stroke-width="2"/>
+  <!-- the song graph: boxy step line, early (yellow) above the centre line, on time (green), late (red) below -->
+  <line x1="8" y1="32" x2="56" y2="32" stroke="#243040" stroke-width="2" stroke-dasharray="3 3"/>
+  <path d="M8 36 H20 V22" fill="none" stroke="#e6b422" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M20 22 H32 V32" fill="none" stroke="#2fbf71" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M32 32 H44 V44" fill="none" stroke="#2fbf71" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M44 44 H56" fill="none" stroke="#e5484d" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

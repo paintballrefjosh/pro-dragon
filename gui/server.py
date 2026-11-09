@@ -109,6 +109,7 @@ class DashboardServer:
         r = app.router
         r.add_get("/", self._handle_index)
         r.add_get("/ws", self._handle_ws)
+        r.add_get("/favicon.svg", self._handle_favicon)
         r.add_get("/api/settings", self._api_settings_get)
         r.add_post("/api/settings", self._api_settings_post)
         r.add_post("/api/settings/reset", self._api_settings_reset)
@@ -177,6 +178,10 @@ class DashboardServer:
     async def _handle_index(self, request):
         from aiohttp import web
         return web.FileResponse(STATIC_DIR / "index.html", headers={"Cache-Control": "no-store"})
+
+    async def _handle_favicon(self, request):
+        from aiohttp import web
+        return web.FileResponse(STATIC_DIR / "favicon.svg", headers={"Content-Type": "image/svg+xml"})
 
     def _current_state(self) -> dict:
         state = dict(self._state)

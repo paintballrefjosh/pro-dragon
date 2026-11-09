@@ -265,3 +265,11 @@ def test_full_gui_session_songs_graph_files_reanalysis():
             time.sleep(0.25)
         assert not e.ctrl.snapshot()["monitoring"]
         assert (Path(e.settings.cfg["report"]["output_dir"]) / Path(song["id"]).parent / "session_report.txt").exists()
+
+
+def test_favicon_is_served_and_linked_from_the_page():
+    with Env() as e:
+        r = e.get("/favicon.svg")
+        assert r.status_code == 200 and r.headers["Content-Type"].startswith("image/svg+xml")
+        assert "<svg" in r.text
+        assert 'href="/favicon.svg"' in e.get("/").text
