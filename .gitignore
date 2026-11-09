@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Recorded songs (church audio + reports) and per-machine GUI settings
+reports/
+user_settings.json
+
+# Local Claude Code settings
+.claude/

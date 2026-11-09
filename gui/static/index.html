@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pro Dragon</title>
+<style>
+  :root {
+    --bg: #0b0f14; --panel: #131a22; --panel2: #18212c; --line: #243040; --text: #e8edf2; --muted: #8493a3;
+    --green: #2fbf71; --yellow: #e6b422; --red: #e5484d; --blue: #4aa3ff; --orange: #f08a3c; --grey: #8b98a7;
+    --accent: #5b8cff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 15px; }
+  button, input, select { font: inherit; color: inherit; }
+  a { color: var(--accent); }
+
+  /* header */
+  header { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 10px 20px;
+    background: #0e141b; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .brand { font-weight: 800; font-size: 1.15rem; letter-spacing: .02em; }
+  nav { display: flex; gap: 4px; }
+  nav button { background: none; border: 0; padding: 8px 14px; border-radius: 8px; color: var(--muted); cursor: pointer; font-weight: 600; }
+  nav button.active { background: var(--panel2); color: var(--text); }
+  .hdr-right { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .pill, .hdr-btn { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 999px; padding: 4px 11px; font-size: .8rem; color: #cbd5df; }
+  .hdr-btn { cursor: pointer; font-weight: 600; padding: 6px 13px; }
+  .hdr-btn:hover, .hdr-btn.open { border-color: #3a4c63; background: var(--panel2); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--grey); flex: none; }
+  .dot.ok { background: var(--green); } .dot.warn { background: var(--yellow); } .dot.bad { background: var(--red); }
+  /* not ready: red, with an ✗ in place of the dot */
+  .pill.bad, .hdr-btn.bad { background: rgba(229,72,77,.14); border-color: var(--red); color: #ffb3b6; }
+  .pill.bad .dot, .hdr-btn.bad .dot { display: none; }
+  .pill.bad::before, .hdr-btn.bad::before { content: '✗'; color: var(--red); font-weight: 900; font-size: .95rem; line-height: 1; }
+  .badge-n { background: var(--accent); color: #fff; border-radius: 999px; min-width: 18px; padding: 0 6px; font-size: .72rem; font-weight: 800; text-align: center; }
+  .badge-n.bad { background: var(--red); } .badge-n:empty { display: none; }
+
+  /* pop-out panels (Setup, Messages) */
+  .popover { position: fixed; right: 20px; top: 56px; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 76px); overflow: auto;
+    background: var(--panel); border: 1px solid #3a4c63; border-radius: 12px; padding: 16px 18px; z-index: 30;
+    box-shadow: 0 18px 50px rgba(0,0,0,.55); }
+  .popover[hidden] { display: none; }
+  .popover h2 { margin: 0 0 12px; font-size: 1rem; }
+  .pop-status { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: .85rem; }
+  .pop-status .ok { color: var(--green); } .pop-status .bad { color: #ff8b8f; }
+
+  main { padding: 18px 20px 60px; max-width: 1400px; margin: 0 auto; }
+  section.tab { display: none; } section.tab.active { display: block; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .card h2 { margin: 0 0 12px; font-size: 1rem; letter-spacing: .02em; }
+  .card h3 { margin: 16px 0 8px; font-size: .85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .row > label { min-width: 110px; color: var(--muted); font-size: .85rem; }
+  .row .grow { flex: 1 1 160px; min-width: 0; }
+  input[type=text], input[type=number], input[type=password], select {
+    background: #0e141b; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+  input[type=number] { width: 120px; }
+  .btn { background: var(--panel2); border: 1px solid var(--line); border-radius: 9px; padding: 9px 16px; cursor: pointer; font-weight: 600; }
+  .btn:hover:not(:disabled) { border-color: #3a4c63; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.go { background: var(--green); border-color: var(--green); color: #04150b; }
+  .btn.stop { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn.big { font-size: 1.05rem; padding: 12px 22px; }
+  .hint { color: var(--muted); font-size: .8rem; margin-top: 4px; }
+  .status-text { font-size: .85rem; color: var(--muted); }
+  .status-text.bad { color: var(--red); } .status-text.ok { color: var(--green); }
+
+  /* live */
+  .banner { border-radius: 10px; padding: 16px 18px; background: #1c2530; margin-bottom: 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .banner.recording { background: #6b1d14; } .banner.analyzing { background: #5a4710; }
+  .banner .st { font-size: 1.6rem; font-weight: 800; }
+  .banner .sub { flex: 1 1 200px; color: #dfe6ee; }
+  .clock { font-variant-numeric: tabular-nums; font-size: 1.6rem; font-weight: 700; }
+  .slide-now { background: #0e141b; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-height: 84px; }
+  .slide-now .grp { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+  .slide-now .txt { font-size: 1.3rem; margin-top: 4px; white-space: pre-line; }
+  .live-grid { display: grid; grid-template-columns: minmax(340px, 480px) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .live-grid { grid-template-columns: 1fr; } }
+  .banner { min-height: 82px; }
+  .changes { margin: 10px 0 0; padding: 0; list-style: none; font-size: .85rem; height: 170px; overflow: auto; }   /* fixed height: the card never grows */
+  .changes:empty::before { content: 'Slide changes appear here while a song is recording.'; color: var(--muted); }
+  .changes li { display: flex; gap: 10px; padding: 3px 0; border-bottom: 1px solid #1a222d; }
+  .changes .t { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 52px; }
+  .changes .n { min-width: 34px; color: #cbd5df; }
+  .eq { display: block; width: 100%; height: 110px; background: #0f151c; border: 1px solid var(--line); border-radius: 8px; margin-top: 12px; }
+  .log { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow: auto; font-size: .85rem; }
+  .log li { padding: 4px 0; border-bottom: 1px solid #1a222d; display: flex; gap: 8px; }
+  .log .t { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+  .log li.error { color: #ff8b8f; } .log li.warn { color: var(--yellow); } .log li.done { color: var(--green); }
+
+  /* songs */
+  .songs-layout { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .songs-layout { grid-template-columns: 1fr; } }
+  .song-list { display: flex; flex-direction: column; gap: 8px; }
+  .song-item { text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; cursor: pointer; width: 100%; }
+  .song-item.active { border-color: var(--accent); background: var(--panel2); }
+  .song-item.picked { border-color: var(--red); background: rgba(229,72,77,.10); }
+  .song-item .pick { float: right; width: 18px; height: 18px; margin: 2px 0 0 8px; accent-color: var(--red); }
+  .stat-line { color: var(--muted); font-size: .8rem; }
+  .note-warn { margin: 8px 0; padding: 8px 11px; border-radius: 8px; background: rgba(230,180,34,.12); border: 1px solid rgba(230,180,34,.45); color: var(--text); font-size: .85rem; }
+  .song-item .nm { font-weight: 700; }
+  .song-item .meta { color: var(--muted); font-size: .78rem; margin-top: 2px; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 7px; }
+  .badge { font-size: .72rem; font-weight: 700; border-radius: 999px; padding: 2px 8px; background: #1c2530; color: #cbd5df; }
+  .badge.green { background: rgba(47,191,113,.18); color: var(--green); }
+  .badge.red { background: rgba(229,72,77,.18); color: #ff8b8f; }
+  .badge.yellow { background: rgba(230,180,34,.18); color: var(--yellow); }
+  .badge.orange { background: rgba(240,138,60,.18); color: var(--orange); }
+  .badge.blue { background: rgba(74,163,255,.18); color: var(--blue); }
+  .badge.grey { background: rgba(139,152,167,.18); color: #c0cad5; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 12px 0; }
+  .tile { background: #0e141b; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .tile .lb { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; }
+  .tile .v { font-size: 1.5rem; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .tile.green .v { color: var(--green); } .tile.red .v { color: #ff8b8f; } .tile.yellow .v { color: var(--yellow); }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
+  .chip { border-radius: 8px; padding: 6px 11px; font-size: .85rem; font-weight: 600; border: 1px solid transparent; cursor: pointer; background: none; }
+  .chip.grey { border-color: var(--grey); color: #cdd6df; background: rgba(139,152,167,.1); }
+  .chip.orange { border-color: var(--orange); color: var(--orange); background: rgba(240,138,60,.1); }
+  .chip.blue { border-color: var(--blue); color: var(--blue); background: rgba(74,163,255,.1); }
+  .chip.red { border-color: var(--red); color: #ff8b8f; background: rgba(229,72,77,.1); }
+  .chip.yellow { border-color: var(--yellow); color: var(--yellow); background: rgba(230,180,34,.1); }
+  .chip.green { border-color: var(--green); color: var(--green); background: rgba(47,191,113,.1); }
+  .graph { margin: 10px 0; } .graph svg { width: 100%; height: auto; display: block; border-radius: 10px; }
+  .controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: end; padding: 10px 0 2px; }
+  .controls .ctl { display: flex; flex-direction: column; gap: 4px; }
+  .controls .ctl label { color: var(--muted); font-size: .75rem; }
+  .controls input[type=number] { width: 100px; }
+  .check { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: #cbd5df; }
+  .check input { width: auto; }
+
+  table.t { width: 100%; border-collapse: collapse; font-size: .92rem; margin-top: 6px; }
+  table.t th { text-align: left; color: var(--muted); font-weight: 600; font-size: .72rem; text-transform: uppercase;
+    letter-spacing: .06em; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  table.t td { padding: 8px; border-bottom: 1px solid #1a222d; vertical-align: top; }
+  table.t td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.t tr.missing td { background: rgba(229,72,77,.10); }
+  table.t tr.missing td:first-child { box-shadow: inset 5px 0 0 var(--red); }
+  table.t tr.missing td.v-na { color: #ffb3b6; font-weight: 800; }
+  table.t tr.missing .note { color: #ffb3b6; }
+  table.t tr.blank td { opacity: .5; }
+  table.t tr.flash td { animation: flash 1.6s ease-out; }
+  @keyframes flash { from { background: rgba(91,140,255,.35); } to { background: transparent; } }
+  .v-late { color: #ff8b8f; font-weight: 700; } .v-early { color: var(--yellow); font-weight: 700; }
+  .v-ontime { color: var(--green); font-weight: 700; } .v-na { color: var(--muted); }
+  .note { color: var(--muted); font-size: .8rem; margin-top: 3px; }
+  .note.warn { color: #cdd6df; }
+  .words { color: #cfd8e1; }
+  .sec-title { display: flex; align-items: center; gap: 8px; margin: 22px 0 4px; font-weight: 700; }
+  .sec-title .sym { font-size: 1.1rem; }
+  .sec-help { color: var(--muted); font-size: .82rem; margin-bottom: 4px; }
+  .empty { color: var(--muted); padding: 24px 4px; }
+
+  /* settings */
+  .set-group { margin-bottom: 18px; }
+  .set-row { display: grid; grid-template-columns: 230px minmax(160px, 260px) 1fr; gap: 12px; align-items: start; padding: 8px 0; border-bottom: 1px solid #1a222d; }
+  @media (max-width: 800px) { .set-row { grid-template-columns: 1fr; } }
+  .set-row label { font-weight: 600; } .set-row .help { color: var(--muted); font-size: .8rem; }
+  .set-row .err { color: #ff8b8f; font-size: .8rem; margin-top: 3px; }
+  .ovr { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); margin-left: 6px; }
+  .set-row input[type=number] { width: 140px; }
+
+  #liveGraph { min-height: 120px; }
+  .op-row { cursor: pointer; } .op-row:hover td { background: #18212c; } .op-row.active td { background: #1c2838; }
+  .badge.op { background: rgba(91,140,255,.18); color: #9db8ff; }
+  .pend { color: var(--muted); font-weight: 700; } .spin { display: inline-block; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+  .link { background: none; border: 0; color: var(--accent); cursor: pointer; padding: 0; text-decoration: underline; font: inherit; }
+
+  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #1d2a39; border: 1px solid var(--line);
+    padding: 10px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: opacity .2s; max-width: 80vw; z-index: 20; }
+  #toast.show { opacity: 1; } #toast.bad { border-color: var(--red); } #toast.ok { border-color: var(--green); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">🐉 Pro Dragon</div>
+  <nav id="nav">
+    <button data-tab="live" class="active">Live</button>
+    <button data-tab="songs">Songs</button>
+    <button data-tab="operators">Operators</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+  <div class="hdr-right">
+    <div class="pill" id="pillWhisper"><span class="dot"></span><span>Speech</span></div>
+    <div class="pill" id="pillAudio"><span class="dot"></span><span>Audio</span></div>
+    <div class="pill" id="pillWs"><span class="dot"></span><span>GUI</span></div>
+    <button class="hdr-btn" id="btnSetup" aria-haspopup="true" aria-expanded="false" title="Setup — ProPresenter address, audio source, offset, operator"><span class="dot"></span><span>ProPresenter</span></button>
+    <button class="hdr-btn" id="btnMsgs" aria-haspopup="true" aria-expanded="false" title="Messages"><span>Messages</span><span class="badge-n" id="msgBadge"></span></button>
+  </div>
+</header>
+
+<!-- ============ pop-out panels (hover or click the header buttons) ============ -->
+<div class="popover" id="panelSetup" hidden role="dialog" aria-label="Setup">
+  <h2>Setup</h2>
+  <div class="pop-status" id="setupStatus"></div>
+  <div class="row">
+    <label>ProPresenter</label>
+    <input class="grow" type="text" id="proHost" placeholder="host / IP">
+    <input type="number" id="proPort" min="1" max="65535" style="width:90px">
+    <button class="btn" id="connectBtn" title="Save this address. Pro Dragon connects by itself and keeps retrying.">Apply</button>
+  </div>
+  <div class="row"><label></label><span class="status-text" id="connectStatus">Connects automatically and reconnects if the link drops.</span></div>
+
+  <div class="row">
+    <label>Audio source</label>
+    <select class="grow" id="srcSelect"></select>
+    <button class="btn" id="refreshDevices" title="Re-scan audio devices">↻</button>
+  </div>
+  <div class="row" id="rowChannels"><label>Channel(s)</label><input type="text" id="srcChannels" value="1" style="width:120px">
+    <span class="hint" id="channelsHint">e.g. 1 or 1,2 (several are mixed to mono)</span></div>
+  <div class="row" id="ndiHint" style="display:none"><label></label><span class="hint">NDI usually adds some delay (often 100–300 ms) — set the audio offset below to match, e.g. +150.</span></div>
+  <div class="row" id="rowNdiAddr"><label>NDI address</label><input class="grow" type="text" id="ndiAddr" placeholder="optional — e.g. 192.168.20.15 (sender on another subnet/VLAN)">
+    <button class="btn" id="ndiAddrSave" title="Save the address and look for NDI sources again">Save &amp; look</button></div>
+  <div class="row" id="rowFile"><label>Audio file</label><input class="grow" type="text" id="srcFile" placeholder="C:\path\to\song.wav (16-bit PCM)"></div>
+  <div class="row"><label></label><span class="hint" id="audioDesc"></span></div>
+  <div class="row">
+    <label>Audio offset (ms)</label>
+    <input type="number" id="offsetMs" step="10">
+    <button class="btn" id="offsetApply">Apply</button>
+    <span class="hint">+ = audio arrives late (NDI…), − = early</span>
+  </div>
+  <div class="row">
+    <label>Operator</label>
+    <input class="grow" type="text" id="operator" list="opList" maxlength="60" placeholder="who is running the slides (optional)" autocomplete="off">
+  </div>
+  <div class="row"><label></label><span class="hint">Saved with each song for the Operators report. Takes effect right away for songs that finish after this. Not remembered between launches, so a new operator is never credited by mistake.</span></div>
+</div>
+
+<div class="popover" id="panelMsgs" hidden role="dialog" aria-label="Messages">
+  <h2>Messages</h2>
+  <div class="row" id="lastSongRow" style="display:none">
+    <button class="btn primary" id="viewLast">View results of the last song →</button>
+  </div>
+  <ul class="log" id="log"></ul>
+</div>
+
+<main>
+  <!-- ============================ LIVE ============================ -->
+  <section class="tab active" id="tab-live">
+    <div class="live-grid">
+      <div class="card" id="songCard">
+        <h2>Song</h2>
+        <div class="banner" id="banner">
+          <div class="st" id="bnStatus">IDLE</div>
+          <div class="sub" id="bnSub">Put the song live in ProPresenter, then press Start song.</div>
+          <div class="clock" id="bnClock"></div>
+        </div>
+        <div class="row">
+          <button class="btn go big" id="songStart">Start song</button>
+          <button class="btn stop big" id="songStop">Stop song</button>
+        </div>
+        <div class="slide-now"><div class="grp" id="slideGrp">Slide on screen</div><div class="txt" id="slideTxt">—</div></div>
+        <ul class="changes" id="changes"></ul>
+        <canvas id="eq" class="eq" height="110" title="Audio spectrum: 60 Hz – 8 kHz (what the speech recognizer hears)"></canvas>
+        <div class="hint" id="eqNote">Audio level: –</div>
+      </div>
+
+      <div class="card" id="liveCard">
+        <h2>Live delays <span class="hint" style="font-weight:400">(estimates while a song records — the final report replaces them)</span></h2>
+        <div class="graph" id="liveGraph"><div class="empty">Live estimates appear here while a song is recording.</div></div>
+        <table class="t" id="liveTable"></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ SONGS ============================ -->
+  <section class="tab" id="tab-songs">
+    <div class="songs-layout">
+      <div>
+        <div class="row"><button class="btn" id="songsRefresh">↻ Refresh</button><button class="btn" id="songsSelect">Select…</button><span class="hint" id="songsDir"></span></div>
+        <div class="row" id="selBar" style="display:none">
+          <button class="btn" id="selShort" title="Songs under 30 seconds long, or with no measured slide changes">Select short / empty</button>
+          <button class="btn" id="selAll">All</button>
+          <button class="btn stop" id="selDelete" disabled>Delete selected</button>
+        </div>
+        <div class="song-list" id="songList"></div>
+      </div>
+      <div id="songDetail"><div class="empty">Select a song to see its graph and per-slide results.</div></div>
+    </div>
+  </section>
+
+  <!-- ============================ OPERATORS ============================ -->
+  <section class="tab" id="tab-operators">
+    <div class="card">
+      <h2>Operators</h2>
+      <div class="hint">How each person running the slides compares, pooled over all of their saved songs. Name the operator on the Live tab before recording, or assign one on a song's page.</div>
+      <div class="controls">
+        <div class="ctl"><label>Margin of error — late (s)</label><input type="number" step="0.05" min="0" max="30" id="opLate"></div>
+        <div class="ctl"><label>Margin of error — early (s)</label><input type="number" step="0.05" min="0" max="30" id="opEarly"></div>
+        <button class="btn" id="opRefresh">↻ Refresh</button>
+      </div>
+      <div id="opTable"></div>
+    </div>
+    <div class="card" id="opDetail" style="display:none;margin-top:16px"></div>
+  </section>
+
+  <!-- ============================ SETTINGS ============================ -->
+  <section class="tab" id="tab-settings">
+    <div class="card">
+      <h2>Settings</h2>
+      <div class="hint" id="settingsInfo" style="margin-bottom:12px"></div>
+      <div id="settingsForm"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary" id="settingsSave">Save settings</button>
+        <button class="btn" id="settingsReset">Reset all to config.yaml</button>
+      </div>
+    </div>
+  </section>
+</main>
+<datalist id="opList"></datalist>
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+
+  // ---------------------------------------------------------------- helpers
+  function el(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    if (attrs) for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+    for (const kid of kids) if (kid != null) e.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    return e;
+  }
+  const clear = (n) => n.replaceChildren();
+  const fmtClock = (s) => { s = Math.max(0, s || 0); const m = Math.floor(s / 60); return m + ':' + (s - m * 60).toFixed(1).padStart(4, '0'); };
+  const fmtClockI = (s) => { s = Math.max(0, s || 0); const m = Math.floor(s / 60); return m + ':' + String(Math.floor(s % 60)).padStart(2, '0'); };
+  const fmtDelay = (d) => (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1) + 's';
+  const flat = (t) => (t || '').split('\n').map((x) => x.trim()).filter(Boolean).join(' / ');
+  const fmtDate = (ts) => new Date(ts * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+  let toastTimer = null;
+  function toast(msg, kind) {
+    const t = $('toast');
+    t.textContent = msg; t.className = 'show ' + (kind || '');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.className = ''; }, 4200);
+  }
+
+  async function api(method, path, body) {
+    const opts = { method, headers: { 'X-ProDragon': '1' } };
+    if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    let res;
+    try { res = await fetch(path, opts); } catch (e) { toast('Lost connection to Pro Dragon', 'bad'); throw e; }
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* not json */ }
+    data._status = res.status;
+    return data;
+  }
+
+  // ---------------------------------------------------------------- state
+  let S = {};                 // last pushed live state
+  let elapsedAt = 0;          // local time the elapsed value arrived
+  let settingsView = null;    // {values, fields, ...}
+  let devices = [];
+  let songs = [];
+  let current = null;         // selected song detail
+  let currentId = null;
+  let margins = { late: 0.75, early: 0.75 };
+  let lastSeenSongId = null;
+
+  // ---------------------------------------------------------------- tabs
+  function showTab(name) {
+    document.querySelectorAll('#nav button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('section.tab').forEach((s) => s.classList.toggle('active', s.id === 'tab-' + name));
+    if (name === 'songs') loadSongs();
+    if (name === 'operators') loadOperators();
+    if (name === 'settings') loadSettings();
+  }
+  $('nav').addEventListener('click', (e) => { if (e.target.dataset.tab) showTab(e.target.dataset.tab); });
+
+  // ---------------------------------------------------------------- header pills
+  // A status item is either ready (green dot) or not (red, with an ✗ — see .pill.bad). `ready` is a boolean.
+  function setPill(id, ready, text, title) {
+    const p = $(id);
+    p.classList.toggle('bad', !ready);
+    p.querySelector('.dot').className = 'dot ' + (ready ? 'ok' : 'bad');
+    p.lastChild.textContent = text; p.title = title || '';
+  }
+
+  function renderHeader() {
+    const p = S.pro7 || {};
+    // the Setup button carries the ProPresenter status (and nothing else)
+    setPill('btnSetup', !!p.connected, p.connected ? 'ProPresenter connected' : 'ProPresenter not connected',
+      (p.connected ? 'Connected to ' : 'Trying to reach ') + (p.host || '') + ':' + (p.port || '') + (p.presentation ? ' — live: ' + p.presentation : '') + ' · click for setup');
+    const w = S.whisper || {};
+    const wtxt = { ready: 'Speech ready', loading: 'Speech loading…', error: 'Speech error' }[w.status] || 'Speech not loaded';
+    setPill('pillWhisper', w.status === 'ready', wtxt, w.detail || '');
+    setPill('pillAudio', !!S.monitoring && !S.switching, S.switching ? 'Audio switching…' : (S.monitoring ? 'Audio on' : 'Audio off'),
+      S.monitoring ? (S.audio_desc || '') : 'No audio source is running — choose one under Setup');
+    renderSetupStatus();
+  }
+
+  function renderSetupStatus() {
+    const box = $('setupStatus'); if (!box) return;
+    const p = S.pro7 || {}, w = S.whisper || {};
+    clear(box);
+    const item = (ok, text) => box.append(el('span', { class: ok ? 'ok' : 'bad', text: (ok ? '● ' : '✗ ') + text }));
+    item(!!p.connected, p.connected ? 'ProPresenter ' + p.host + ':' + p.port : 'ProPresenter not connected — trying ' + (p.host || '?') + ':' + (p.port || '?'));
+    item(!!S.monitoring && !S.switching, S.switching ? 'Audio switching…' : (S.monitoring ? 'Audio: ' + (S.audio_desc || 'on') : 'Audio off — choose a source below'));
+    item(w.status === 'ready', w.status === 'ready' ? 'Speech model ready' : (w.detail || 'Speech model not loaded yet'));
+  }
+
+  // ---------------------------------------------------------------- live tab
+  function srcValue() { return $('srcSelect').value; }
+
+  const splitVal = (v) => { const i = v.indexOf(':'); return [v.slice(0, i), v.slice(i + 1)]; };   // NDI names may contain ':'
+
+  function updateSourceRows() {
+    const [kind] = splitVal(srcValue());
+    $('rowChannels').style.display = (kind === 'input' || kind === 'ndi') ? '' : 'none';
+    $('channelsHint').textContent = kind === 'ndi' ? 'leave empty to mix all channels' : 'e.g. 1 or 1,2 (several are mixed to mono)';
+    $('rowFile').style.display = kind === 'file' ? '' : 'none';
+    $('ndiHint').style.display = kind === 'ndi' ? '' : 'none';
+  }
+
+  function sourceSpec() {
+    const [kind, rest] = splitVal(srcValue());
+    if (kind === 'file') return { kind: 'file', file: $('srcFile').value };
+    if (kind === 'ndi') return { kind: 'ndi', name: rest, channels: $('srcChannels').value.trim() };
+    const spec = { kind, index: rest === '' ? null : Number(rest) };
+    if (kind === 'input') spec.channels = $('srcChannels').value;
+    return spec;
+  }
+
+  let ndiAvailable = true, ndiScanned = false, lastSelectSpec = null;
+
+  function populateDevices(selectSpec) {
+    const sel = $('srcSelect'); const keep = sel.value;
+    if (selectSpec) lastSelectSpec = selectSpec;
+    clear(sel);
+    const loop = devices.filter((d) => d.kind === 'loopback');
+    const inputs = devices.filter((d) => d.kind === 'input');
+    const ndis = devices.filter((d) => d.kind === 'ndi');
+    const g1 = el('optgroup', { label: 'Speakers — what is playing on this computer (testing)' });
+    g1.append(el('option', { value: 'loopback:', text: 'Default speakers' }));
+    loop.forEach((d) => g1.append(el('option', { value: 'loopback:' + d.index, text: d.name.replace(' [Loopback]', '') })));
+    const g2 = el('optgroup', { label: 'Inputs — microphone / line-in / Dante' });
+    inputs.forEach((d) => g2.append(el('option', { value: 'input:' + d.index, text: d.name + ' — ' + d.channels + 'ch, ' + d.host_api })));
+    const g4 = el('optgroup', { label: 'NDI — audio over the network' });
+    if (!ndiAvailable) g4.append(el('option', { value: 'none:', disabled: true, text: 'NDI not installed (pip install ndi-python)' }));
+    else if (!ndiScanned) g4.append(el('option', { value: 'none:', disabled: true, text: 'looking for NDI sources…' }));
+    else if (!ndis.length) g4.append(el('option', { value: 'none:', disabled: true, text: 'no NDI sources found (press ↻ to look again)' }));
+    ndis.forEach((d) => g4.append(el('option', { value: 'ndi:' + d.name, text: d.name })));
+    const g3 = el('optgroup', { label: 'Other' });
+    g3.append(el('option', { value: 'file:', text: 'Audio file (.wav)…' }));
+    sel.append(g1, g2, g4, g3);
+    let want = keep;
+    const sp = selectSpec || (keep ? null : lastSelectSpec);
+    if (sp && sp.kind) {
+      if (sp.kind === 'file') want = 'file:';
+      else if (sp.kind === 'ndi') want = 'ndi:' + (sp.name || '');
+      else want = sp.kind + ':' + (sp.index == null ? '' : sp.index);
+      if ((sp.kind === 'input' || sp.kind === 'ndi') && sp.channels) $('srcChannels').value = sp.channels;
+      if (sp.kind === 'file' && sp.file) $('srcFile').value = sp.file;
+    }
+    if ([...sel.options].some((o) => o.value === want && !o.disabled)) sel.value = want;
+    updateSourceRows();
+  }
+
+  async function loadDevices(selectSpec, withNdi) {
+    const r = await api('GET', '/api/devices' + (withNdi ? '?ndi=1' : ''));
+    if (!r.ok) { toast(r.error || 'Could not list audio devices', 'bad'); return; }
+    ndiAvailable = r.ndi_available !== false;
+    if (withNdi) ndiScanned = true;
+    devices = r.devices; populateDevices(selectSpec);
+  }
+
+  function renderLive() {
+    const mon = !!S.monitoring, switching = !!S.switching;
+    const rec = S.status === 'recording';
+    const proUp = !!(S.pro7 && S.pro7.connected);
+    // the audio source can't change while a song records or while a switch is under way
+    ['srcSelect', 'srcChannels', 'srcFile', 'refreshDevices', 'ndiAddr', 'ndiAddrSave'].forEach((id) => { $(id).disabled = rec || switching; });
+    $('audioDesc').textContent = switching ? 'Switching audio source…' : (mon ? 'Listening to: ' + (S.audio_desc || '') : 'Not listening — choose an audio source above.')
+      + (rec ? '  (locked while a song is recording)' : '');
+    $('songStart').disabled = !mon || rec || !proUp;
+    $('songStop').disabled = !mon || !rec;
+    if (document.activeElement !== $('offsetMs') && S.offset_ms !== undefined) $('offsetMs').value = Math.round(S.offset_ms);
+
+    const bn = $('banner');
+    bn.classList.toggle('recording', rec); bn.classList.toggle('analyzing', S.status === 'analyzing');
+    if (rec) {
+      $('bnStatus').textContent = '● RECORDING';
+      $('bnSub').textContent = (S.song_name || '') + ' — slide ' + (S.slide_index != null ? S.slide_index + 1 : '–') + '/' + S.slide_count + ' · ' + S.changes + ' changes';
+    } else if (S.status === 'analyzing') {
+      $('bnStatus').textContent = 'ANALYZING…';
+      $('bnSub').textContent = 'Transcribing the last song — you can start the next one now.';
+    } else {
+      if (!mon) { $('bnStatus').textContent = 'NO AUDIO'; $('bnSub').textContent = 'Choose an audio source under Setup (top right).'; }
+      else if (!proUp) { $('bnStatus').textContent = 'WAITING'; $('bnSub').textContent = 'Waiting for ProPresenter to connect — it retries by itself. Check the address under Setup.'; }
+      else { $('bnStatus').textContent = 'READY'; $('bnSub').textContent = 'Put the song live in ProPresenter, then press Start song.'; }
+    }
+    $('slideGrp').textContent = rec && S.slide_group ? 'Slide on screen · ' + S.slide_group : 'Slide on screen';
+    $('slideTxt').textContent = rec ? (S.slide_text || (S.slide_index != null ? '(blank slide)' : '—')) : ((S.pro7 && S.pro7.presentation) ? 'Live in ProPresenter: ' + S.pro7.presentation : '—');
+
+    const ul = $('changes'); clear(ul);
+    (S.live_events || []).slice().reverse().forEach((e) => {
+      ul.append(el('li', null, el('span', { class: 't', text: fmtClock(e.at) }), el('span', { class: 'n', text: '#' + e.slide }),
+        el('span', { text: (e.group ? e.group + ' · ' : '') + (e.text || '(blank slide)') + (e.initial ? '  (already live at start)' : '') })));
+    });
+
+    const db = typeof S.level_db === 'number' ? S.level_db : -96;
+    $('eqNote').textContent = S.monitoring ? 'Audio level: ' + (db <= -90 ? 'silent' : db.toFixed(0) + ' dB') + (db > -3 ? '  — very loud, may be clipping' : '') : 'Spectrum 60 Hz – 8 kHz · shown once an audio source is running';
+
+    renderMessages();
+    $('lastSongRow').style.display = S.last_song_id ? '' : 'none';
+    if (S.last_song_id && S.last_song_id !== lastSeenSongId) {
+      lastSeenSongId = S.last_song_id;
+      if ($('tab-songs').classList.contains('active')) loadSongs();
+    }
+    if (S.job && S.job.id && S.job.id === currentId && S.job.state !== 'running' && S._jobShown !== S.job.message + S.job.state) {
+      S._jobShown = S.job.message + S.job.state;
+      if (S.job.state === 'done') { toast('Re-analysis finished', 'ok'); openSong(currentId, true); loadSongs(); }
+      else toast('Re-analysis failed: ' + S.job.message, 'bad');
+    }
+    renderOperatorField();
+    renderLiveDelays();
+  }
+
+  // ---------------------------------------------------------------- operator box (Live tab)
+  function renderOperatorField() {
+    const dl = $('opList');
+    const names = S.operators || [];
+    if (dl.dataset.key !== names.join('|')) {
+      dl.dataset.key = names.join('|'); clear(dl);
+      names.forEach((n) => dl.append(el('option', { value: n })));
+    }
+    // show the operator Pro Dragon is really using (unless being edited); never blank a name that was just typed
+    if (S.operator && document.activeElement !== $('operator')) $('operator').value = S.operator;
+  }
+  $('operator').addEventListener('change', async () => {
+    const r = await api('POST', '/api/operator', { name: $('operator').value });
+    if (r.ok) toast(r.message ? 'Operator: ' + r.message : 'Operator cleared', 'ok'); else toast(r.error || r.message || 'Invalid name', 'bad');
+  });
+
+  // ---------------------------------------------------------------- live delays (Live tab)
+  let liveGraphTimer = null, liveGraphBusy = false;
+
+  async function refreshLiveGraph() {
+    if (liveGraphBusy) return;
+    liveGraphBusy = true;
+    try {
+      const r = await fetch('/api/live/graph.svg?late=' + margins.late + '&early=' + margins.early, { headers: { 'X-ProDragon': '1' } });
+      const box = $('liveGraph');
+      if (!r.ok) return;
+      const doc = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
+      clear(box); box.append(document.importNode(doc.documentElement, true));
+    } catch (e) { /* ignore: next tick retries */ } finally { liveGraphBusy = false; }
+  }
+
+  function renderLiveDelays() {
+    const live = S.live || {};
+    const on = S.status === 'recording' && live.enabled;
+    // the card is always there (so the page never re-flows when a song starts); only its contents change
+    if (on && !liveGraphTimer) { refreshLiveGraph(); liveGraphTimer = setInterval(refreshLiveGraph, 4000); }
+    if (!on && liveGraphTimer) { clearInterval(liveGraphTimer); liveGraphTimer = null; }
+    if (!on) {
+      if (!$('liveGraph').dataset.idle) {
+        clear($('liveGraph')); clear($('liveTable')); $('liveGraph').dataset.idle = '1';
+        $('liveGraph').append(el('div', { class: 'empty', text: S.status === 'recording' ? 'Live estimates are turned off (Settings → Live view).' : 'Live estimates appear here while a song is recording.' }));
+      }
+      return;
+    }
+    delete $('liveGraph').dataset.idle;
+    const t = $('liveTable'); clear(t);
+    t.append(el('tr', null, ...['#', 'At', 'Section', 'Delay (estimate)'].map((h) => el('th', { text: h }))));
+    (live.rows || []).filter((r) => !r.blank).slice(-10).reverse().forEach((r) => {
+      const tr = el('tr', null, el('td', { class: 'num', text: r.slide }), el('td', { class: 'num', text: fmtClock(r.at) }), el('td', { text: r.group || '' }));
+      if (r.delay != null) { const k = classify(r.delay); tr.append(el('td', { class: 'num v-' + k, text: (r.initial ? '≤' : '') + fmtDelay(r.delay) + '  ' + LBL[k] })); }
+      else if (r.pending) tr.append(el('td', { class: 'pend' }, el('span', { class: 'spin', text: '…' }), ' waiting for the singing'));
+      else tr.append(el('td', { class: 'v-na', text: '✕ words not heard' }));
+      t.append(tr);
+    });
+    if ((live.rows || []).filter((r) => !r.blank).length === 0) t.append(el('tr', null, el('td', { colspan: 4, class: 'v-na', text: 'No slide changes yet.' })));
+  }
+
+  setInterval(() => {   // smooth clock between server ticks
+    if (S.status === 'recording') $('bnClock').textContent = fmtClock((S.elapsed || 0) + (Date.now() - elapsedAt) / 1000);
+    else $('bnClock').textContent = '';
+  }, 200);
+
+  // Monitoring is always on: picking a source simply switches what it listens to (a moment after the last change).
+  let srcTimer = null;
+  function applySourceSoon(delay) {
+    clearTimeout(srcTimer);
+    srcTimer = setTimeout(async () => {
+      const spec = sourceSpec();
+      if (spec.kind === 'none' || (spec.kind === 'file' && !String(spec.file || '').trim())) return;     // nothing usable chosen yet
+      const r = await api('POST', '/api/audio/source', { source: spec });
+      if (!r.ok) toast(r.message || r.error || 'Could not switch the audio source', 'bad');
+    }, delay);
+  }
+  $('srcSelect').addEventListener('change', () => { updateSourceRows(); applySourceSoon(150); });
+  $('srcChannels').addEventListener('change', () => applySourceSoon(300));
+  $('srcFile').addEventListener('change', () => applySourceSoon(300));
+  $('refreshDevices').addEventListener('click', async () => { ndiScanned = false; await loadDevices(null, false); await loadDevices(null, true); });
+  $('connectBtn').addEventListener('click', async () => {      // saves the address; the connection itself is automatic
+    $('connectStatus').className = 'status-text'; $('connectStatus').textContent = 'Connecting…';
+    const r = await api('POST', '/api/propresenter/connect', { host: $('proHost').value, port: $('proPort').value });
+    $('connectStatus').className = 'status-text ' + (r.ok ? 'ok' : 'bad');
+    $('connectStatus').textContent = r.ok ? 'Connected.' : ((r.message || r.error || 'Could not connect') + ' (still trying)');
+  });
+  $('songStart').addEventListener('click', async () => { const r = await api('POST', '/api/song/start'); if (!r.ok) toast('Could not start the song — see Messages', 'bad'); });
+  $('songStop').addEventListener('click', async () => { await api('POST', '/api/song/stop'); });
+  $('offsetApply').addEventListener('click', async () => {
+    const r = await api('POST', '/api/settings', { patch: { 'timing.offset_ms': $('offsetMs').value } });
+    if (r.ok) { toast('Offset saved — applies to songs analyzed from now on', 'ok'); settingsView = r.settings; }
+    else toast((r.errors && Object.values(r.errors)[0]) || 'Invalid offset', 'bad');
+  });
+  $('viewLast').addEventListener('click', () => { panels.msgs.close(); showTab('songs'); openSong(S.last_song_id); });
+
+  // ---------------------------------------------------------------- songs tab
+  async function loadSongs() {
+    const r = await api('GET', '/api/songs');
+    if (!r.ok) return;
+    songs = r.songs;
+    renderSongList();
+    if (!currentId && songs.length) openSong(S.last_song_id && songs.some((s) => s.id === S.last_song_id) ? S.last_song_id : songs[0].id);
+  }
+
+  function renderSongList() {
+    const list = $('songList'); clear(list);
+    if (!songs.length) { list.append(el('div', { class: 'empty', text: 'No saved songs yet. Record one from the Live tab.' })); return; }
+    songs.forEach((s) => {
+      const b = [];
+      if (!s.analyzed) b.push(el('span', { class: 'badge grey', text: 'not analyzed' }));
+      else if (s.measured) b.push(el('span', { class: 'badge ' + (s.pct_on_time >= 75 ? 'green' : s.pct_on_time >= 50 ? 'yellow' : 'red'), text: Math.round(s.pct_on_time) + '% on time' }));
+      if (s.problems.not_heard) b.push(el('span', { class: 'badge grey', text: '✕ ' + s.problems.not_heard }));
+      if (s.problems.not_shown) b.push(el('span', { class: 'badge orange', text: '◆ ' + s.problems.not_shown }));
+      if (s.problems.no_slide) b.push(el('span', { class: 'badge blue', text: '▬ ' + s.problems.no_slide }));
+      const picked = picking && pickedIds.has(s.id);
+      const pickBox = picking ? el('input', { type: 'checkbox', class: 'pick', checked: picked, tabindex: '-1' }) : null;
+      list.append(el('button', { class: 'song-item' + (s.id === currentId && !picking ? ' active' : '') + (picked ? ' picked' : ''),
+        onclick: () => { if (picking) { pickedIds.has(s.id) ? pickedIds.delete(s.id) : pickedIds.add(s.id); renderSongList(); } else openSong(s.id); } },
+        ...(pickBox ? [pickBox] : []),
+        el('div', { class: 'nm', text: s.name }), el('div', { class: 'meta', text: fmtDate(s.started_at) + ' · ' + fmtClockI(s.duration) + (s.operator ? ' · ' + s.operator : '') }),
+        el('div', { class: 'badges' }, ...b)));
+    });
+  }
+  $('songsRefresh').addEventListener('click', loadSongs);
+
+  // ---- clean-up: select songs and delete them (permanently, with their audio)
+  let picking = false;
+  const pickedIds = new Set();
+  function updateSelBar() {
+    $('selBar').style.display = picking ? '' : 'none';
+    $('songsSelect').textContent = picking ? 'Done' : 'Select…';
+    const n = pickedIds.size;
+    $('selDelete').disabled = !n; $('selDelete').textContent = n ? 'Delete ' + n + ' selected' : 'Delete selected';
+  }
+  const isShortOrEmpty = (s) => s.duration < 30 || !s.measured;
+  async function deleteSongs(ids, what) {
+    if (!ids.length) return;
+    const msg = 'Permanently delete ' + what + ' — including the saved audio, report and graph? This cannot be undone.';
+    if (!confirm(msg)) return;
+    const r = await api('POST', '/api/songs/delete', { ids });
+    if (!r.ok && !(r.deleted && r.deleted.length)) { toast(r.error || 'Could not delete', 'bad'); return; }
+    const gone = new Set(r.deleted || []);
+    gone.forEach((id) => pickedIds.delete(id));
+    songs = songs.filter((s) => !gone.has(s.id));
+    if (gone.has(currentId)) { currentId = null; current = null; renderDetail(); }
+    toast('Deleted ' + gone.size + (gone.size === 1 ? ' song' : ' songs') + (r.error ? ' — some could not be deleted: ' + r.error : ''), r.error ? 'bad' : 'ok');
+    updateSelBar(); renderSongList(); loadSongs();
+  }
+  $('songsSelect').addEventListener('click', () => { picking = !picking; if (!picking) pickedIds.clear(); updateSelBar(); renderSongList(); });
+  $('selShort').addEventListener('click', () => {
+    pickedIds.clear(); songs.filter(isShortOrEmpty).forEach((s) => pickedIds.add(s.id));
+    updateSelBar(); renderSongList();
+    if (!pickedIds.size) toast('No short or empty songs found');
+  });
+  $('selAll').addEventListener('click', () => {
+    if (pickedIds.size === songs.length) pickedIds.clear(); else songs.forEach((s) => pickedIds.add(s.id));
+    updateSelBar(); renderSongList();
+  });
+  $('selDelete').addEventListener('click', () => {
+    const ids = [...pickedIds], first = songs.find((s) => s.id === ids[0]);
+    deleteSongs(ids, ids.length === 1 && first ? '“' + first.name + '”' : ids.length + ' songs');
+  });
+
+  async function openSong(id, keepScroll) {
+    if (!id) return;
+    const r = await api('GET', '/api/song?id=' + encodeURIComponent(id));
+    if (!r.ok) { toast(r.error || 'Could not open song', 'bad'); return; }
+    current = r.song; currentId = id;
+    renderSongList(); renderDetail();
+  }
+
+  function classify(d) { return d > margins.late ? 'late' : (d < -margins.early ? 'early' : 'ontime'); }
+  const LBL = { late: 'LATE', early: 'EARLY', ontime: 'ON TIME' };
+
+  function stats(timings) {
+    const m = timings.filter((t) => t.delay != null && !t.initial);
+    if (!m.length) return null;
+    const d = m.map((t) => t.delay).sort((a, b) => a - b);
+    const cls = m.map((t) => classify(t.delay));
+    const n = m.length, pct = (k) => 100 * cls.filter((c) => c === k).length / n;
+    return { n, mean: d.reduce((a, b) => a + b, 0) / n, median: n % 2 ? d[(n - 1) / 2] : (d[n / 2 - 1] + d[n / 2]) / 2,
+      late: pct('late'), early: pct('early'), ontime: pct('ontime'), worstLate: d[n - 1], mostEarly: d[0],
+      nLate: cls.filter((c) => c === 'late').length, nEarly: cls.filter((c) => c === 'early').length };
+  }
+
+  let graphTimer = null;
+  let graphNode = null, graphFor = null;   // last loaded graph; kept so re-rendering the table doesn't blank the chart
+  async function loadGraph() {
+    if (!current) return;
+    const id = current.id;
+    const r = await fetch('/api/graph.svg?id=' + encodeURIComponent(id) + '&late=' + margins.late + '&early=' + margins.early, { headers: { 'X-ProDragon': '1' } });
+    if (!current || current.id !== id) return;          // user moved on while it loaded
+    const box = $('graphBox'); if (!box) return;
+    clear(box);
+    if (!r.ok) { box.append(el('div', { class: 'empty', text: 'Graph unavailable' })); return; }
+    const doc = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
+    graphNode = document.importNode(doc.documentElement, true); graphFor = id;
+    box.append(graphNode.cloneNode(true));
+  }
+
+  function renderDetail() {
+    const root = $('songDetail'); clear(root);
+    if (!current) { root.append(el('div', { class: 'empty', text: 'Select a song to see its graph and per-slide results.' })); return; }
+    const c = current;
+    const card = el('div', { class: 'card' });
+    root.append(card);
+
+    card.append(el('h2', { text: c.name }),
+      el('div', { class: 'hint', text: fmtDate(c.started_at) + ' · ' + fmtClockI(c.duration) + ' · audio offset applied: ' + ((c.settings && c.settings.offset_ms) || 0) + ' ms' }));
+
+    (c.notes || []).forEach((n) => card.append(el('div', { class: 'note-warn', text: '⚠ ' + n })));
+
+    // who ran the slides for this song (editable: e.g. to fix a missing name)
+    const opIn = el('input', { type: 'text', list: 'opList', maxlength: '60', value: c.operator || '', placeholder: '(no operator)', style: 'max-width:240px' });
+    card.append(el('div', { class: 'row', style: 'margin-top:8px' }, el('label', { text: 'Operator' }), opIn,
+      el('button', { class: 'btn', onclick: async () => {
+        const r = await api('POST', '/api/song/operator', { id: c.id, operator: opIn.value });
+        if (!r.ok) { toast(r.error || 'Could not save', 'bad'); return; }
+        current = r.detail; toast('Operator saved', 'ok'); renderDetail(); loadSongs();
+      } }, 'Save'),
+      el('span', { style: 'flex:1' }),
+      el('button', { class: 'btn stop', title: 'Permanently delete this song and its audio', onclick: () => deleteSongs([c.id], '“' + c.name + '”') }, 'Delete song')));
+
+    // controls
+    const lateIn = el('input', { type: 'number', step: '0.05', min: '0', max: '30', value: margins.late, id: 'mLate' });
+    const earlyIn = el('input', { type: 'number', step: '0.05', min: '0', max: '30', value: margins.early, id: 'mEarly' });
+    const onMargin = () => {
+      const l = parseFloat(lateIn.value), e = parseFloat(earlyIn.value);
+      if (!(l >= 0 && e >= 0)) return;
+      margins = { late: l, early: e };
+      renderDetailBody();
+      clearTimeout(graphTimer); graphTimer = setTimeout(loadGraph, 150);
+    };
+    lateIn.addEventListener('input', onMargin); earlyIn.addEventListener('input', onMargin);
+    const saveDefault = el('button', { class: 'btn', onclick: async () => {
+      const r = await api('POST', '/api/settings', { patch: { 'timing.on_time_late_s': margins.late, 'timing.on_time_early_s': margins.early } });
+      if (r.ok) { settingsView = r.settings; toast('Margin of error saved as the default', 'ok'); } else toast('Could not save', 'bad');
+    } }, 'Save as default');
+    const offIn = el('input', { type: 'number', step: '10', value: Math.round((c.settings && c.settings.offset_ms) || 0), id: 'reOffset' });
+    const reTx = el('input', { type: 'checkbox', id: 'reTx' });
+    const reBtn = el('button', { class: 'btn primary', id: 'reBtn', onclick: async () => {
+      reBtn.disabled = true; reBtn.textContent = 'Re-analyzing…';
+      const r = await api('POST', '/api/song/reanalyze', { id: c.id, offset_ms: offIn.value, retranscribe: reTx.checked });
+      reBtn.disabled = false; reBtn.textContent = 'Re-analyze';
+      if (!r.ok) { toast(r.error || 'Re-analysis failed', 'bad'); return; }
+      if (r.job) { toast('Re-transcribing in the background…'); return; }
+      current = r.detail; renderDetail(); loadSongs(); toast('Re-analyzed with offset ' + offIn.value + ' ms', 'ok');
+    } }, 'Re-analyze');
+    const remapBtn = el('button', { class: 'btn', title: "If ProPresenter's slide list changed while this song was recorded, the slide numbers can point at the wrong words. This re-reads every slide change with the presentation's current slide list (ProPresenter must be connected with this song live).",
+      onclick: async () => {
+        if (!confirm("Re-read this song's slide changes using ProPresenter's CURRENT slide list?\n\nConnect to ProPresenter and put this song live first. The list is assumed to be right for the whole song; the original list is kept in the saved file.")) return;
+        remapBtn.disabled = true;
+        const r = await api('POST', '/api/songs/remap', { id: c.id });
+        remapBtn.disabled = false;
+        if (!r.ok) { toast(r.error || 'Could not update the slide list', 'bad'); return; }
+        current = r.detail; renderDetail(); loadSongs(); toast('Slide list updated — song re-analyzed', 'ok');
+      } }, 'Fix slide list…');
+    card.append(el('div', { class: 'controls' },
+      el('div', { class: 'ctl' }, el('label', { text: 'Margin of error — late (s)' }), lateIn),
+      el('div', { class: 'ctl' }, el('label', { text: 'Margin of error — early (s)' }), earlyIn),
+      saveDefault,
+      el('div', { style: 'width:1px;align-self:stretch;background:var(--line)' }),
+      el('div', { class: 'ctl' }, el('label', { text: 'Audio offset (ms)' }), offIn),
+      el('label', { class: 'check' }, reTx, 'also re-transcribe (slow)'),
+      reBtn,
+      el('div', { style: 'width:1px;align-self:stretch;background:var(--line)' }),
+      remapBtn));
+
+    card.append(el('div', { id: 'detailBody' }));
+    if (graphFor !== c.id) graphNode = null;
+    renderDetailBody();
+    loadGraph();
+  }
+
+  function renderDetailBody() {
+    const body = $('detailBody'); if (!body || !current) return;
+    clear(body);
+    const c = current, T = c.timings;
+    const st = stats(T);
+    const notHeard = T.filter((t) => t.delay == null && (t.text || '').trim());
+
+    if (st) {
+      body.append(el('div', { class: 'tiles' },
+        tile('Measured', st.n), tile('Average', fmtDelay(st.mean)), tile('On time', Math.round(st.ontime) + '%', 'green'),
+        tile('Late', Math.round(st.late) + '%', 'red'), tile('Early', Math.round(st.early) + '%', 'yellow'),
+        tile('Worst late', fmtDelay(st.worstLate)), tile('Most early', fmtDelay(st.mostEarly))));
+    } else {
+      body.append(el('div', { class: 'tiles' }, tile('Measured', 0)));
+    }
+
+    const chips = el('div', { class: 'chips' });
+    if (st && st.nLate) chips.append(el('span', { class: 'chip red', text: st.nLate + ' late' }));
+    if (st && st.nEarly) chips.append(el('span', { class: 'chip yellow', text: st.nEarly + ' early' }));
+    if (notHeard.length) chips.append(el('button', { class: 'chip grey', onclick: () => jump('missing'), text: '✕ ' + notHeard.length + ' slide' + (notHeard.length > 1 ? 's' : '') + " whose words weren't heard" }));
+    if (c.unshown.length) chips.append(el('button', { class: 'chip orange', onclick: () => jump('secUnshown'), text: '◆ ' + c.unshown.length + ' lyric line' + (c.unshown.length > 1 ? 's' : '') + ' sung but slide never shown' }));
+    if (c.heard_other.length) chips.append(el('button', { class: 'chip blue', onclick: () => jump('secOther'), text: '▬ ' + c.heard_other.length + ' stretch' + (c.heard_other.length > 1 ? 'es' : '') + ' of words with no slide' }));
+    if (!chips.children.length && st) chips.append(el('span', { class: 'chip green', text: '✓ no missed or unmatched slides' }));
+    body.append(chips);
+
+    const gbox = el('div', { class: 'graph', id: 'graphBox' });
+    if (graphNode && graphFor === c.id) gbox.append(graphNode.cloneNode(true));
+    else gbox.append(el('div', { class: 'empty', text: 'Loading graph…' }));
+    body.append(gbox);
+
+    // main table
+    const table = el('table', { class: 't' });
+    table.append(el('tr', null, ...['#', 'At', 'Section', 'Delay', 'Verdict', 'Words on slide'].map((h) => el('th', { text: h }))));
+    T.forEach((t) => {
+      const noLyrics = !(t.text || '').trim();
+      const tr = el('tr', { class: noLyrics ? 'blank' : (t.delay == null ? 'missing' : '') });
+      tr.dataset.kind = noLyrics ? 'blank' : (t.delay == null ? 'missing' : 'ok');
+      tr.append(el('td', { class: 'num', text: t.slide_index + 1 }), el('td', { class: 'num', text: fmtClock(t.change_time) }), el('td', { text: t.group || '' }));
+      if (t.delay == null) {
+        tr.append(el('td', { class: 'num v-na', text: '—' }), el('td', { class: 'v-na', text: noLyrics ? '—' : '✕ NOT HEARD' }));
+      } else {
+        const k = classify(t.delay);
+        tr.append(el('td', { class: 'num v-' + k, text: (t.initial ? '≤' : '') + fmtDelay(t.delay) }), el('td', { class: 'v-' + k, text: LBL[k] }));
+      }
+      const words = el('td', { class: 'words' }, noLyrics ? '(blank slide)' : flat(t.text));
+      if (t.note && !noLyrics) words.append(el('div', { class: 'note' + (t.delay == null ? ' warn' : ''), text: '↳ ' + t.note }));
+      tr.append(words);
+      table.append(tr);
+    });
+    body.append(table);
+
+    // unshown
+    body.append(el('div', { class: 'sec-title', id: 'secUnshown' }, el('span', { class: 'sym', style: 'color:var(--orange)', text: '◆' }), 'Sung, but no slide change was matched'));
+    body.append(el('div', { class: 'sec-help', text: 'These words are on a slide in this presentation and the band sang them, but no matching slide change was found nearby (the slide was skipped, or the band went off-arrangement).' }));
+    if (c.unshown.length) {
+      const t2 = el('table', { class: 't' }); t2.append(el('tr', null, ...['At', 'Section', 'Words sung'].map((h) => el('th', { text: h }))));
+      c.unshown.forEach((u) => t2.append(el('tr', null, el('td', { class: 'num', text: fmtClock(u.onset_time) }), el('td', { text: u.group || '' }), el('td', { class: 'words', text: flat(u.text) }))));
+      body.append(t2);
+    } else body.append(el('div', { class: 'empty', text: 'None.' }));
+
+    body.append(el('div', { class: 'sec-title', id: 'secOther' }, el('span', { class: 'sym', style: 'color:var(--blue)', text: '▬' }), 'Words heard, but no slide matched'));
+    body.append(el('div', { class: 'sec-help', text: "Speaking, ad-libs, or lyrics that aren't on any slide (e.g. talking during an interlude). Only stretches of several confidently-recognized words are listed." }));
+    if (c.heard_other.length) {
+      const t3 = el('table', { class: 't' }); t3.append(el('tr', null, ...['At', 'Words heard'].map((h) => el('th', { text: h }))));
+      c.heard_other.forEach((h) => t3.append(el('tr', null, el('td', { class: 'num', text: fmtClock(h.onset_time) }), el('td', { class: 'words', text: '“' + h.text + '”' }))));
+      body.append(t3);
+    } else body.append(el('div', { class: 'empty', text: 'None.' }));
+
+    // downloads + audio
+    const dl = el('div', { class: 'row', style: 'margin-top:18px' });
+    [['txt', 'Report (.txt)'], ['svg', 'Graph (.svg)'], ['json', 'Data (.json)'], ['wav', 'Audio (.wav)']].forEach(([k, label]) => {
+      const ok = k === 'wav' ? c.has_audio : c.files[k];
+      if (ok) dl.append(el('a', { class: 'btn', href: '/api/song/file?id=' + encodeURIComponent(c.id) + '&kind=' + k, text: label }));
+    });
+    body.append(dl);
+    if (c.has_audio) body.append(el('audio', { controls: true, preload: 'none', style: 'width:100%;margin-top:8px', src: '/api/song/file?id=' + encodeURIComponent(c.id) + '&kind=wav' }));
+  }
+
+  function tile(label, value, cls) { return el('div', { class: 'tile ' + (cls || '') }, el('div', { class: 'lb', text: label }), el('div', { class: 'v', text: String(value) })); }
+  function jump(what) {
+    let target = null;
+    if (what === 'missing') target = document.querySelector('#detailBody tr[data-kind="missing"]');
+    else target = $(what);
+    if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    if (what === 'missing') document.querySelectorAll('#detailBody tr[data-kind="missing"]').forEach((r) => { r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); });
+  }
+
+  // ---------------------------------------------------------------- operators tab
+  let opData = [], opSelected = null, opTimer = null;
+  const opQuery = () => 'late=' + margins.late + '&early=' + margins.early;
+  const pct = (v) => (v == null ? '—' : Math.round(v) + '%');
+  const dly = (v) => (v == null ? '—' : fmtDelay(v));
+
+  async function loadOperators() {
+    $('opLate').value = margins.late; $('opEarly').value = margins.early;
+    const r = await api('GET', '/api/operators?' + opQuery());
+    if (!r.ok) return;
+    opData = r.operators;
+    renderOperators();
+    if (opSelected && opData.some((o) => o.name === opSelected)) renderOperatorDetail();
+    else { opSelected = null; $('opDetail').style.display = 'none'; }
+  }
+
+  function renderOperators() {
+    const box = $('opTable'); clear(box);
+    if (!opData.length) {
+      box.append(el('div', { class: 'empty', text: 'No saved songs yet. Record a song (with an operator name on the Live tab) and it appears here.' }));
+      return;
+    }
+    const table = el('table', { class: 't' });
+    table.append(el('tr', null, ...['Operator', 'Songs', 'Changes', 'Average', 'On time', 'Late', 'Early', 'Worst late', 'Most early', '✕ Not heard', '◆ Not shown', '▬ No slide'].map((h) => el('th', { text: h }))));
+    opData.forEach((o) => {
+      const tr = el('tr', { class: 'op-row' + (o.name === opSelected ? ' active' : ''), onclick: () => { opSelected = o.name; renderOperators(); renderOperatorDetail(); } },
+        el('td', { class: o.unassigned ? 'v-na' : '', text: o.name }), el('td', { class: 'num', text: o.songs }), el('td', { class: 'num', text: o.measured }),
+        el('td', { class: 'num', text: dly(o.mean_delay) }), el('td', { class: 'num v-ontime', text: pct(o.pct_on_time) }),
+        el('td', { class: 'num v-late', text: pct(o.pct_late) }), el('td', { class: 'num v-early', text: pct(o.pct_early) }),
+        el('td', { class: 'num', text: dly(o.worst_late) }), el('td', { class: 'num', text: dly(o.most_early) }),
+        el('td', { class: 'num', text: o.not_heard }), el('td', { class: 'num', text: o.not_shown }), el('td', { class: 'num', text: o.no_slide }));
+      table.append(tr);
+    });
+    box.append(table);
+    if (opData.some((o) => o.unassigned)) box.append(el('div', { class: 'hint', style: 'margin-top:8px', text: "'(no operator)' = songs recorded without a name. Open one in the Songs tab to assign it." }));
+  }
+
+  async function loadOpGraph(name) {
+    const r = await fetch('/api/operator/graph.svg?name=' + encodeURIComponent(name) + '&' + opQuery(), { headers: { 'X-ProDragon': '1' } });
+    const box = $('opGraph'); if (!box || opSelected !== name) return;
+    clear(box);
+    if (!r.ok) { box.append(el('div', { class: 'empty', text: 'Graph unavailable' })); return; }
+    const doc = new DOMParser().parseFromString(await r.text(), 'image/svg+xml');
+    box.append(document.importNode(doc.documentElement, true));
+  }
+
+  function renderOperatorDetail() {
+    const o = opData.find((x) => x.name === opSelected);
+    const card = $('opDetail'); clear(card);
+    if (!o) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    card.append(el('h2', { text: o.name }),
+      el('div', { class: 'tiles' }, tile('Songs', o.songs), tile('Slide changes', o.measured), tile('Average', dly(o.mean_delay)),
+        tile('On time', pct(o.pct_on_time), 'green'), tile('Late', pct(o.pct_late), 'red'), tile('Early', pct(o.pct_early), 'yellow'),
+        tile('Worst late', dly(o.worst_late)), tile('Most early', dly(o.most_early))),
+      el('div', { class: 'graph', id: 'opGraph' }, el('div', { class: 'empty', text: 'Loading graph…' })));
+    const t = el('table', { class: 't' });
+    t.append(el('tr', null, ...['Date', 'Song', 'Changes', 'Average', 'On time', 'Late', 'Early', '✕', '◆', '▬', ''].map((h) => el('th', { text: h }))));
+    o.per_song.slice().reverse().forEach((p) => {
+      t.append(el('tr', null, el('td', { class: 'num', text: fmtDate(p.started_at) }), el('td', { text: p.name }), el('td', { class: 'num', text: p.measured }),
+        el('td', { class: 'num', text: dly(p.mean_delay) }), el('td', { class: 'num v-ontime', text: pct(p.pct_on_time) }),
+        el('td', { class: 'num v-late', text: pct(p.pct_late) }), el('td', { class: 'num v-early', text: pct(p.pct_early) }),
+        el('td', { class: 'num', text: p.not_heard }), el('td', { class: 'num', text: p.not_shown }), el('td', { class: 'num', text: p.no_slide }),
+        el('td', null, el('button', { class: 'link', onclick: () => { showTab('songs'); openSong(p.id); } }, 'open →'))));
+    });
+    card.append(t);
+    loadOpGraph(o.name);
+  }
+
+  ['opLate', 'opEarly'].forEach((id) => $(id).addEventListener('input', () => {
+    const l = parseFloat($('opLate').value), e = parseFloat($('opEarly').value);
+    if (!(l >= 0 && e >= 0)) return;
+    margins = { late: l, early: e };
+    clearTimeout(opTimer); opTimer = setTimeout(loadOperators, 200);
+  }));
+  $('opRefresh').addEventListener('click', loadOperators);
+
+  // ---------------------------------------------------------------- settings tab
+  function fillNdiAddr() {
+    const v = settingsView && settingsView.values && settingsView.values['audio.ndi_address'];
+    if (document.activeElement !== $('ndiAddr')) $('ndiAddr').value = v || '';
+  }
+  $('ndiAddrSave').addEventListener('click', async () => {
+    const r = await api('POST', '/api/settings', { patch: { 'audio.ndi_address': $('ndiAddr').value } });
+    if (!r.ok) { toast((r.errors && Object.values(r.errors)[0]) || 'Invalid address', 'bad'); return; }
+    settingsView = r.settings; fillNdiAddr(); renderSettings();
+    toast('NDI address saved — looking for sources…', 'ok');
+    ndiScanned = false; await loadDevices(null, false); await loadDevices(null, true);
+  });
+
+  async function loadSettings() {
+    const r = await api('GET', '/api/settings');
+    settingsView = r;
+    fillNdiAddr();
+    applyMarginDefaults();
+    renderSettings();
+  }
+
+  function applyMarginDefaults() {
+    if (!settingsView) return;
+    const v = settingsView.values;
+    if (v['timing.on_time_late_s'] != null) margins = { late: v['timing.on_time_late_s'], early: v['timing.on_time_early_s'] };
+    if (v['propresenter.host'] !== undefined && document.activeElement !== $('proHost')) $('proHost').value = v['propresenter.host'];
+    if (v['propresenter.port'] !== undefined && document.activeElement !== $('proPort')) $('proPort').value = v['propresenter.port'];
+  }
+
+  function renderSettings() {
+    const form = $('settingsForm'); clear(form);
+    const v = settingsView.values, ovr = new Set(settingsView.overridden);
+    $('settingsInfo').textContent = 'Changes are saved to user_settings.json and layered on top of config.yaml (a dot marks a value changed here). ' +
+      'The GUI address (' + (settingsView.gui.host || '') + ':' + (settingsView.gui.port || '') + ') is set in config.yaml and needs a restart to change.';
+    const groups = {};
+    settingsView.fields.forEach((f) => { (groups[f.group] = groups[f.group] || []).push(f); });
+    Object.entries(groups).forEach(([name, fields]) => {
+      const g = el('div', { class: 'set-group' }, el('h3', { text: name }));
+      fields.forEach((f) => {
+        let input;
+        const val = v[f.key];
+        if (f.type === 'bool') { input = el('input', { type: 'checkbox', checked: !!val }); }
+        else if (f.type === 'choice') { input = el('select', null, ...f.choices.map((c) => el('option', { value: c, text: c }))); input.value = val; }
+        else if (f.type === 'int' || f.type === 'float') { input = el('input', { type: 'number', step: f.type === 'int' ? '1' : 'any', min: f.min, max: f.max, value: val }); }
+        else if (f.type === 'password') { input = el('input', { type: 'password', value: val || '', autocomplete: 'off' }); }
+        else { input = el('input', { type: 'text', value: val == null ? '' : val }); }
+        input.dataset.key = f.key; input.dataset.type = f.type;
+        g.append(el('div', { class: 'set-row' },
+          el('label', null, f.label, ovr.has(f.key) ? el('span', { class: 'ovr', title: 'changed in the GUI' }) : null),
+          el('div', null, input, el('div', { class: 'err', 'data-err': f.key })),
+          el('div', { class: 'help', text: f.help || '' })));
+      });
+      form.append(g);
+    });
+  }
+
+  function gatherPatch() {
+    const patch = {};
+    document.querySelectorAll('#settingsForm [data-key]').forEach((inp) => {
+      const key = inp.dataset.key, orig = settingsView.values[key];
+      let val = inp.type === 'checkbox' ? inp.checked : inp.value;
+      const num = inp.dataset.type === 'int' || inp.dataset.type === 'float';
+      const same = inp.type === 'checkbox' ? val === !!orig : (num ? Number(val) === Number(orig) : String(val) === String(orig == null ? '' : orig));
+      if (!same) patch[key] = val;
+    });
+    return patch;
+  }
+
+  $('settingsSave').addEventListener('click', async () => {
+    document.querySelectorAll('#settingsForm .err').forEach((e) => { e.textContent = ''; });
+    const patch = gatherPatch();
+    if (!Object.keys(patch).length) { toast('No changes to save'); return; }
+    const r = await api('POST', '/api/settings', { patch });
+    if (r.ok) { settingsView = r.settings; applyMarginDefaults(); renderSettings(); toast('Settings saved', 'ok'); }
+    else {
+      Object.entries(r.errors || {}).forEach(([k, msg]) => { const e = document.querySelector('[data-err="' + k + '"]'); if (e) e.textContent = msg; });
+      toast('Some settings are invalid', 'bad');
+    }
+  });
+  $('settingsReset').addEventListener('click', async () => {
+    if (!confirm('Discard every setting changed in the GUI and go back to config.yaml?')) return;
+    const r = await api('POST', '/api/settings/reset');
+    if (r.ok) { settingsView = r.settings; applyMarginDefaults(); renderSettings(); toast('Settings reset', 'ok'); }
+  });
+
+  // ---------------------------------------------------------------- equalizer
+  const EQ_FLOOR = -90, EQ_TOP = -10;                 // dB range shown (0 dB = a full-scale sine)
+  const eq = { target: [], shown: [], peaks: [], edges: [], last: 0 };
+  function onSpectrum(sp) {
+    eq.target = sp.db; eq.edges = sp.edges; eq.last = performance.now();
+    if (eq.shown.length !== sp.db.length) { eq.shown = sp.db.map(() => EQ_FLOOR); eq.peaks = sp.db.map(() => EQ_FLOOR); }
+  }
+  function drawEq(dt) {
+    const cv = $('eq'); if (!cv || cv.offsetParent === null) return;       // not on screen
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    const css = getComputedStyle(document.documentElement), col = (n) => css.getPropertyValue(n).trim();
+    const n = eq.shown.length || 24, stale = performance.now() - eq.last > 1500;
+    const labelH = 14, plotH = h - labelH, gap = 2, bw = (w - 8) / n;
+    g.strokeStyle = col('--line'); g.lineWidth = 1; g.beginPath();        // faint level guides
+    [0.25, 0.5, 0.75].forEach((f) => { const y = Math.round(plotH * f) + .5; g.moveTo(0, y); g.lineTo(w, y); }); g.stroke();
+    for (let i = 0; i < n; i++) {
+      const tgt = stale || eq.target[i] === undefined ? EQ_FLOOR : eq.target[i];
+      let cur = eq.shown[i] === undefined ? EQ_FLOOR : eq.shown[i];
+      cur = tgt > cur ? tgt : Math.max(tgt, cur - 60 * dt);                // quick attack, smooth fall (60 dB/s)
+      eq.shown[i] = cur;
+      eq.peaks[i] = cur >= (eq.peaks[i] === undefined ? EQ_FLOOR : eq.peaks[i]) ? cur : Math.max(cur, eq.peaks[i] - 25 * dt);   // peak caps fall slower
+      const frac = Math.max(0, Math.min(1, (cur - EQ_FLOOR) / (EQ_TOP - EQ_FLOOR)));
+      const pf = Math.max(0, Math.min(1, (eq.peaks[i] - EQ_FLOOR) / (EQ_TOP - EQ_FLOOR)));
+      const x = 4 + i * bw, bh = frac * plotH;
+      const grad = g.createLinearGradient(0, plotH, 0, 0);
+      grad.addColorStop(0, col('--green')); grad.addColorStop(0.62, col('--green')); grad.addColorStop(0.82, col('--yellow')); grad.addColorStop(1, col('--red'));
+      g.fillStyle = grad; g.fillRect(x + gap / 2, plotH - bh, bw - gap, bh);
+      if (pf > 0.02) { g.fillStyle = col('--text'); g.fillRect(x + gap / 2, plotH - pf * plotH - 2, bw - gap, 2); }
+    }
+    g.fillStyle = col('--muted'); g.font = '10px system-ui, sans-serif'; g.textBaseline = 'bottom';
+    const ticks = [100, 250, 500, 1000, 2000, 4000];
+    ticks.forEach((f) => {                                                  // frequency labels at the band that holds f
+      const e = eq.edges; if (!e.length) return;
+      let i = 0; while (i < e.length - 2 && e[i + 1] <= f) i++;
+      const label = f >= 1000 ? (f / 1000) + 'k' : String(f);
+      g.textAlign = 'center'; g.fillText(label, 4 + (i + 0.5) * bw, h - 1);
+    });
+  }
+  let eqPrev = performance.now();
+  (function eqFrame(t) { drawEq(Math.min(0.25, (t - eqPrev) / 1000)); eqPrev = t; requestAnimationFrame(eqFrame); })(eqPrev);
+
+  // ---------------------------------------------------------------- messages (panel + header badge)
+  let msgSeenT = 0;                                   // newest message time the user has looked at
+  function renderMessages() {
+    const msgs = S.messages || [];
+    const log = $('log'); clear(log);
+    msgs.slice().reverse().forEach((m) => {
+      log.append(el('li', { class: m.kind || '' }, el('span', { class: 't', text: new Date(m.t * 1000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' }) }), el('span', { text: m.text })));
+    });
+    const newest = msgs.length ? msgs[msgs.length - 1].t : 0;
+    if (panels.msgs.isOpen()) msgSeenT = newest;       // looking at them now
+    const unseen = msgs.filter((m) => m.t > msgSeenT);
+    const bad = unseen.some((m) => m.kind === 'error' || m.kind === 'warn');
+    const badge = $('msgBadge');
+    badge.textContent = unseen.length ? String(unseen.length) : '';
+    badge.classList.toggle('bad', bad);
+  }
+
+  // ---------------------------------------------------------------- pop-out panels (Setup, Messages)
+  // Hover a header button to peek; click to keep the panel open (click again, click outside or Esc closes it).
+  // While you are using it — focus inside it, or the pointer over it — it stays open.
+  function makePanel(btn, panel) {
+    let pinned = false, closeTimer = null, openTimer = null;
+    const isOpen = () => !panel.hidden;
+    const place = () => {
+      const bottom = $('btnSetup').closest('header').getBoundingClientRect().bottom;
+      panel.style.top = Math.round(bottom + 6) + 'px';
+    };
+    const open = () => {
+      Object.values(panels).forEach((p) => { if (p.btn !== btn) p.close(); });
+      clearTimeout(closeTimer);
+      if (isOpen()) return;
+      place(); panel.hidden = false; btn.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+      if (panel.id === 'panelMsgs') renderMessages();
+    };
+    const close = () => {
+      clearTimeout(closeTimer); clearTimeout(openTimer); pinned = false;
+      panel.hidden = true; btn.classList.remove('open'); btn.setAttribute('aria-expanded', 'false');
+    };
+    const softClose = () => {
+      clearTimeout(openTimer); clearTimeout(closeTimer);
+      closeTimer = setTimeout(() => { if (!pinned && !panel.contains(document.activeElement)) close(); }, 350);
+    };
+    btn.addEventListener('mouseenter', () => { clearTimeout(closeTimer); openTimer = setTimeout(open, 120); });
+    btn.addEventListener('mouseleave', softClose);
+    panel.addEventListener('mouseenter', () => clearTimeout(closeTimer));
+    panel.addEventListener('mouseleave', softClose);
+    panel.addEventListener('focusin', () => { pinned = true; });                 // typing / picking from a list: stay open
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isOpen() && pinned) close(); else { open(); pinned = true; }
+    });
+    return { btn, panel, open, close, isOpen };
+  }
+  const panels = {};
+  panels.setup = makePanel($('btnSetup'), $('panelSetup'));
+  panels.msgs = makePanel($('btnMsgs'), $('panelMsgs'));
+  document.addEventListener('mousedown', (e) => {                                 // click outside closes
+    Object.values(panels).forEach((p) => { if (p.isOpen() && !p.panel.contains(e.target) && !p.btn.contains(e.target)) p.close(); });
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') Object.values(panels).forEach((p) => p.close()); });
+  window.addEventListener('resize', () => Object.values(panels).forEach((p) => { if (p.isOpen()) p.panel.style.top = Math.round($('btnSetup').closest('header').getBoundingClientRect().bottom + 6) + 'px'; }));
+
+  // ---------------------------------------------------------------- websocket
+  function setWs(live) { setPill('pillWs', live, live ? 'GUI live' : 'GUI reconnecting…', live ? '' : 'The page lost its link to Pro Dragon — it retries automatically.'); }
+
+  function connect() {
+    const ws = new WebSocket((location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/ws');
+    ws.onopen = () => setWs(true);
+    ws.onclose = () => { setWs(false); setTimeout(connect, 2000); };
+    ws.onerror = () => ws.close();
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg._spectrum) { onSpectrum(msg._spectrum); return; }     // fast equalizer frames aren't state
+        const prev = S;
+        S = msg;
+        if (S._jobShown === undefined && prev._jobShown) S._jobShown = prev._jobShown;
+        elapsedAt = Date.now();
+        renderHeader(); renderLive();
+      } catch (e) { console.error('bad state payload', e); }
+    };
+  }
+
+  // ---------------------------------------------------------------- init
+  (async function init() {
+    setWs(false);
+    connect();
+    await loadSettings();
+    const last = settingsView && settingsView.audio_last;
+    await loadDevices(last, false);
+    loadDevices(null, true);          // NDI discovery takes a few seconds: fill it in afterwards
+  })();
+})();
+</script>
+</body>
+</html>

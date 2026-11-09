@@ -1,0 +1,5 @@
+# Optional: audio from NDI sources (mixers, cameras, PCs running NDI Tools).
+# Install with:  venv\Scripts\pip install -r requirements-ndi.txt
+# The NDI runtime ships inside the wheel. Kept separate so a platform without a wheel
+# can't break the main install.
+ndi-python>=6.0

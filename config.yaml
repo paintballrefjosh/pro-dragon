@@ -1,0 +1,70 @@
+# Pro Dragon Configuration
+# ========================
+# Pro Dragon measures, for every slide change in a song, how many seconds
+# before/after the vocalist started singing that slide the operator changed it.
+
+propresenter:
+  host: 127.0.0.1         # IP address of the ProPresenter machine (127.0.0.1 = this computer)
+  port: 1025              # ProPresenter Network API port (Preferences -> Network)
+  password: ""            # leave blank if none
+  poll_interval: 0.1      # seconds between slide checks; slide timestamps are accurate to ~half this
+
+audio:
+  # Pick ONE source (or leave all unset to choose from a menu at startup):
+  device: null            # input device: name substring or number (mic, line-in, Dante Virtual Soundcard)
+  channels: [1]           # 1-based channel(s) of an input device; several are averaged to mono
+  loopback: false         # true = capture what's playing out of the computer's SPEAKERS (Windows only; testing).
+                          #   With loopback: true, `device` may name which output to capture; otherwise the
+                          #   default speakers are used. All speaker channels are mixed.
+  file: null              # path to a 16-bit .wav file to play as if it were live audio (testing)
+  ndi: null               # name (or part of it) of an NDI source to take audio from, e.g. "MIXER (Audio)".
+                          #   Needs:  pip install -r requirements-ndi.txt   NDI adds delay (often 100-300 ms):
+                          #   set timing.offset_ms to match, e.g. 150. All NDI channels are mixed to mono.
+  ndi_address: null       # optional static (unicast) address of the NDI sender, e.g. "192.168.20.15" or
+                          #   "192.168.20.15:5959"; several separated by commas. Needed when the source is on another
+                          #   subnet/VLAN (automatic discovery can't cross it). Multicast senders need nothing here:
+                          #   once the source is found the stream joins its multicast group by itself.
+
+timing:
+  offset_ms: 0            # Fixed audio-vs-slide offset in milliseconds, either direction.
+                          #   POSITIVE = the audio you're capturing arrives LATE compared to what the room
+                          #              hears/sees (e.g. NDI adds ~100-300 ms): vocal times are moved earlier.
+                          #   NEGATIVE = the audio arrives EARLY relative to the slides.
+                          #   Override per run with:  --offset-ms 200
+  on_time_window_s: 0.75  # a slide change within +/- this many seconds of the vocal start counts as ON TIME
+  min_match_confidence: 0.25   # a slide needs at least this fraction of its words heard to be measured
+  max_match_window_s: 20  # a slide change is only paired with sung words of ITS OWN text that are within
+                          # this many seconds of it (slides are matched by words, not by position, so a
+                          # different arrangement / skipped sections are fine)
+  other_min_words: 4      # "words heard, no slide matched": a stretch of words that no slide explains is only
+  other_min_confidence: 0.5   # listed if it has at least this many words and this mean recognizer confidence
+                          # (filters out the phantom words Whisper invents over music/silence)
+  use_lyrics_prompt: true # give Whisper the song's lyrics as a hint (greatly helps with sung vocals)
+  vad_filter: false       # Whisper's speech filter; leave off, it tends to cut out singing
+
+whisper:
+  model: small            # tiny | base | small | medium | large-v2 | large-v3 (bigger = more accurate, slower)
+  language: en            # language code, or null to auto-detect
+  device: cpu             # cpu | cuda
+  compute_type: int8      # int8 (CPU) | float16 (GPU) | float32
+
+live:
+  # Provisional delays while a song is still playing (the final report after Stop replaces them).
+  # Re-transcribes only the newest few seconds of audio each time, never the whole song again.
+  enabled: true
+  interval_s: 6           # pause between live updates (on top of the time each one takes); shorter = quicker, more CPU
+  max_window_s: 40        # longest stretch of audio transcribed in one go
+
+report:
+  output_dir: ./reports   # each run creates reports/session_<date>/ with per-song .txt/.json/.wav files
+
+gui:
+  # Browser GUI:  python main.py --gui   (setup, start/stop songs, graphs, settings)
+  # In terminal mode the same page is available while the session runs.
+  # Settings changed in the GUI are saved to user_settings.json and layered on top of this file.
+  enabled: true
+  host: 127.0.0.1         # 127.0.0.1 = this computer only (recommended).
+                          # 0.0.0.0 = also reachable from other devices on the LAN (e.g. a tablet) — but the GUI
+                          # has NO login and can start/stop songs and change settings, so only do this on a trusted network.
+  port: 8765
+  open_browser: true      # open the page automatically with --gui
