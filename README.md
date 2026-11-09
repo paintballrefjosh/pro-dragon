@@ -82,3 +82,7 @@ Tests use fakes and never touch real audio devices or ports.
 ## Project layout
 
 See [CLAUDE.md](CLAUDE.md) for the architecture, module map and the reasoning behind key decisions.
+
+## License
+
+Apache License 2.0, see [LICENSE](LICENSE).
