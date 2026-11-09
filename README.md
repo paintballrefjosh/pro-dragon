@@ -12,6 +12,18 @@ delay = slide_change_time - vocal_onset_time
 The report lists each transition with its delay and the words on the slide, so it's easy to
 see where an operator was slow. Pro Dragon only observes: it never controls ProPresenter.
 
+## Screenshots
+
+**Live** — while a song records: the slide on screen, each change as it happens, a live equalizer
+and provisional delays (the final report replaces them at Stop).
+
+![Live page](docs/live.gif)
+
+**Songs** — each saved song gets a graph (green on time, yellow early, red late), a summary and a
+per-slide table with the words on every slide.
+
+![Songs page](docs/songs.png)
+
 ## How it works
 
 1. The operator presses **Start song / Stop song** for each song (GUI button or terminal key `S`).
