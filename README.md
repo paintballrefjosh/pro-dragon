@@ -1,5 +1,7 @@
 # Pro Dragon
 
+<p align="center"><img src="docs/dragon.gif" alt="A dragon with a headset typing on a keyboard while lyrics change on a projector screen" width="640"></p>
+
 Audits ProPresenter 7 operators during live worship songs. For **every slide change** it
 reports how many seconds before or after the vocalist started singing that slide the
 operator changed it:
